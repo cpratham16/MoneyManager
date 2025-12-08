@@ -10,5 +10,7 @@ public interface ProfileRepository extends JpaRepository<ProfileEntity,Long >{
 
     //select emailBy from tbl_profile
     Optional<ProfileEntity>findByEmail(String email);
-    
+
+    //select * from tbl_profile where activation_token=?
+    Optional<ProfileEntity> findByActivationToken(String activationToken);
 }
