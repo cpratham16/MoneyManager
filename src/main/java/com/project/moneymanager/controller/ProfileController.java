@@ -1,5 +1,6 @@
 package com.project.moneymanager.controller;
 
+import com.project.moneymanager.dto.AuthDto;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -13,6 +14,8 @@ import com.project.moneymanager.service.ProfileService;
 
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
+
+import java.util.Map;
 
 @RestController
 @RequiredArgsConstructor
@@ -35,4 +38,30 @@ public class ProfileController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid activation token.");
         }
     }
+
+@PostMapping("/login")
+    public ResponseEntity<Map<String,Object>> login(@RequestBody AuthDto authDto) {
+    try {
+        if (!profileService.isAccountActive(authDto.getEmail())) {
+
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of(
+                    "message", "Account is not activated."
+            ));
+        }
+        Map<String, Object> response = profileService.authenticateAndGenerateToken(authDto);
+        return ResponseEntity.ok(response);
+
+    } catch (Exception e) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of(
+                "message", "Invalid email or password."
+        ));
+    }
+}
+
+
+@GetMapping("/test")
+public String test(){
+        return "Test Successful";
+}
+
 }

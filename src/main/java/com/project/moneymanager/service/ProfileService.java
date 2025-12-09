@@ -1,11 +1,16 @@
 package com.project.moneymanager.service;
 
+import com.project.moneymanager.dto.AuthDto;
 import com.project.moneymanager.dto.ProfileDto;
 import com.project.moneymanager.entity.ProfileEntity;
 import com.project.moneymanager.repository.ProfileRepository;
 
+import java.util.Map;
 import java.util.UUID;
 
+import com.project.moneymanager.util.JwtUtil;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -22,6 +27,9 @@ public class ProfileService {
     private final ProfileRepository profileRepository;
     private final EmailService emailService;
     private final PasswordEncoder passwordEncoder;
+    private final AuthenticationManager authenticationManager;
+    private final JwtUtil jwtUtil;
+
 
     public ProfileDto registerProfile(ProfileDto profileDto) {
         ProfileEntity newProfile = toEntity(profileDto);
@@ -87,7 +95,7 @@ public class ProfileService {
                 .orElseThrow(()-> new UsernameNotFoundException("Profile not found with email: " + authentication.getName()));
     }
 
-    public ProfileDto getCurrentProfileDto(String email){
+    public ProfileDto getPublicProfileDto(String email){
         ProfileEntity currentUser=null;
         if(email==null){
             currentUser=getCurrentProfile();
@@ -104,5 +112,23 @@ public class ProfileService {
                 .createdAt(currentUser.getCreatedAt())
                 .updatedAt(currentUser.getUpdatedAt())
                 .build();
+    }
+
+    public Map<String, Object> authenticateAndGenerateToken(AuthDto authDto) {
+        try{
+            authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(authDto.getEmail(), authDto.getPassword()));
+
+            //Generate JWT Token (Here we are returning a dummy token for simplicity)
+
+            String token = jwtUtil.generateToken(authDto.getEmail());
+            return Map.of(
+                    "token", token,
+                    "user", getPublicProfileDto(authDto.getEmail())
+            );
+        }
+        catch(Exception e){
+            throw new RuntimeException("Invalid Email or Password");
+
+        }
     }
 }
