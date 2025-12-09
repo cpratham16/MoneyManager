@@ -10,12 +10,45 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 public class CategoryService {
 
     private final CategoryRepository categoryRepository;
     private final ProfileService profileService;
+
+    //get categories for current user
+    public List<CategoryDto> getCategoriesForCurrentUser(){
+        ProfileEntity profile = profileService.getCurrentProfile();
+        List<CategoryEntity> categories = categoryRepository.findByProfile_Id(profile.getId());
+        return categories.stream().map(this::toDto).toList();
+    }
+
+
+    //get categories by type for current user
+    public List<CategoryDto> getCategoriesByTypeForCurrentUser(String type){
+        ProfileEntity profile = profileService.getCurrentProfile();
+        List<CategoryEntity> categories = categoryRepository.findByTypeAndProfile_Id(type, profile.getId());
+        return categories.stream().map(this::toDto).toList();
+    }
+
+    //update category
+
+    public CategoryDto updateCategory(Long categoryId, CategoryDto categoryDto){
+        ProfileEntity profile = profileService.getCurrentProfile();
+        CategoryEntity existingCategory = categoryRepository.findByIdAndProfile_Id(categoryId, profile.getId())
+                .orElseThrow(()-> new ResponseStatusException(HttpStatus.NOT_FOUND, "Category not found"));
+
+
+        existingCategory.setName(categoryDto.getName());
+        existingCategory.setIcon(categoryDto.getIcon());
+
+        existingCategory = categoryRepository.save(existingCategory);
+        return toDto(existingCategory);
+    }
+
 
     //save Category
   public CategoryDto saveCategory(CategoryDto categoryDto){
