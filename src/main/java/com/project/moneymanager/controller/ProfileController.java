@@ -1,18 +1,17 @@
 package com.project.moneymanager.controller;
 
 import com.project.moneymanager.dto.AuthDto;
-import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.project.moneymanager.dto.ProfileDto;
 import com.project.moneymanager.service.ProfileService;
 
-import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 
 import java.util.Map;
@@ -30,7 +29,7 @@ public class ProfileController {
     }
 
     @GetMapping("/activate")
-    public ResponseEntity<String> activateProfile(String token) {
+    public ResponseEntity<String> activateProfile(@RequestParam String token) {
         boolean activated = profileService.activateProfile(token);
         if (activated) {
             return ResponseEntity.ok("Profile activated successfully.");

@@ -37,4 +37,7 @@ public interface ExpenseRepository extends JpaRepository<ExpenseEntity,Long> {
             LocalDate startDate,
             LocalDate endDate
     );
+
+
+    List<ExpenseEntity> findByProfileIdAndDate(Long ProfileId, LocalDate date);
 }

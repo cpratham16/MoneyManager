@@ -8,6 +8,7 @@ import com.project.moneymanager.entity.ProfileEntity;
 import com.project.moneymanager.repository.CategoryRepository;
 import com.project.moneymanager.repository.ExpenseRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -21,7 +22,7 @@ public class ExpenseService {
     private final ExpenseRepository expenseRepository;
     private final CategoryService categoryService;
     private final ProfileService profileService;
-    private final CategoryRepository categoryRepository;;
+    private final CategoryRepository categoryRepository;
 
 
     //Retrieve expenses for current month/based on the start and end date
@@ -68,8 +69,22 @@ public class ExpenseService {
                     .orElseThrow(()-> new RuntimeException("Category not found with id: " + dto.getCategoryId()));
 
         ExpenseEntity newExpense = toEntity(dto, profile, category);
-        newExpense = (ExpenseEntity) expenseRepository.save(newExpense);
+        newExpense = expenseRepository.save(newExpense);
         return toDto(newExpense);
+    }
+
+
+    //filter expenses based on date range and keyword
+    public List<ExpenseDto> filterExpenses(LocalDate startDate, LocalDate endDate, String keyword, Sort sort){
+        ProfileEntity profile = profileService.getCurrentProfile();
+        List<ExpenseEntity> expenses = expenseRepository.findByProfileIdAndDateBetweenAndNameContainingIgnoreCase(
+                profile.getId(),
+                startDate,
+                endDate,
+                keyword,
+                sort
+        );
+        return expenses.stream().map(this::toDto).toList();
     }
 
 
@@ -99,4 +114,11 @@ public class ExpenseService {
                 .updatedAt(entity.getUpdatedAt())
                 .build();
     }
+
+    //Notification
+    public List<ExpenseDto> getExpensesByDate(Long profileId, LocalDate date) {
+        List<ExpenseEntity> list= expenseRepository.findByProfileIdAndDate(profileId, date);
+        return list.stream().map(this::toDto).toList();
+    }
+
 }

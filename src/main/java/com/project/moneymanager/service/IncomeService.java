@@ -2,12 +2,12 @@ package com.project.moneymanager.service;
 
 import com.project.moneymanager.dto.IncomeDto;
 import com.project.moneymanager.entity.CategoryEntity;
-import com.project.moneymanager.entity.ExpenseEntity;
 import com.project.moneymanager.entity.IncomeEntity;
 import com.project.moneymanager.entity.ProfileEntity;
 import com.project.moneymanager.repository.CategoryRepository;
 import com.project.moneymanager.repository.IncomeRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -20,9 +20,8 @@ public class IncomeService {
 
 
     private final IncomeRepository incomeRepository;
-    private final CategoryService categoryService;
     private final ProfileService profileService;
-    private final CategoryRepository categoryRepository;;
+    private final CategoryRepository categoryRepository;
 
 
     //Retrieve income for current month/based on the start and end date
@@ -44,7 +43,7 @@ public class IncomeService {
                 .orElseThrow(()-> new RuntimeException("Category not found with id: " + dto.getCategoryId()));
 
         IncomeEntity newIncome = toEntity(dto, profile, category);
-        newIncome = (IncomeEntity) incomeRepository.save(newIncome);
+        newIncome = incomeRepository.save(newIncome);
         return toDto(newIncome);
     }
 
@@ -72,6 +71,20 @@ public class IncomeService {
         ProfileEntity profile = profileService.getCurrentProfile();
         java.math.BigDecimal totalAmount = incomeRepository.findTotalAmountByProfileId(profile.getId());
         return totalAmount != null ? totalAmount : java.math.BigDecimal.ZERO;
+    }
+
+    //filter income by date range and keyword
+    public List<IncomeDto> filterIncomes(LocalDate startDate, LocalDate endDate, String keyword,Sort sort){
+        ProfileEntity profile = profileService.getCurrentProfile();
+        List<IncomeEntity> incomes = incomeRepository.findByProfileIdAndDateBetweenAndNameContainingIgnoreCase(
+                    profile.getId(),
+                    startDate,
+                    endDate,
+                    keyword,
+                    sort);
+
+
+        return incomes.stream().map(this::toDto).toList();
     }
 
 
