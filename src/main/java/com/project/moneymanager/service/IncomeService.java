@@ -10,6 +10,9 @@ import com.project.moneymanager.repository.IncomeRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
+import java.util.List;
+
 
 @Service
 @RequiredArgsConstructor
@@ -20,6 +23,19 @@ public class IncomeService {
     private final CategoryService categoryService;
     private final ProfileService profileService;
     private final CategoryRepository categoryRepository;;
+
+
+    //Retrieve income for current month/based on the start and end date
+    public List<IncomeDto> getCurrentMonthIncomeForProfile(){
+        ProfileEntity profile = profileService.getCurrentProfile();
+        LocalDate startDate = LocalDate.now().withDayOfMonth(1);
+        LocalDate endDate = LocalDate.now().withDayOfMonth(LocalDate.now().lengthOfMonth());
+        List<IncomeEntity> incomes = incomeRepository.findByProfileIdAndDateBetween(profile.getId(), startDate, endDate);
+        return incomes.stream().map(this::toDto).toList();
+    }
+
+
+
 
     //Add new income to database
     public IncomeDto addIncome(IncomeDto dto){
@@ -32,7 +48,31 @@ public class IncomeService {
         return toDto(newIncome);
     }
 
+    //Delete income by id for current profile
+    public void deleteIncomeById(Long incomeId){
+        ProfileEntity profile = profileService.getCurrentProfile();
+        IncomeEntity income = incomeRepository.findById(incomeId)
+                .orElseThrow(()-> new RuntimeException("Income not found with id: " + incomeId));
+        if(!income.getProfile().getId().equals(profile.getId())){
+            throw new RuntimeException("Income does not belong to the current profile");
+        }
+        incomeRepository.deleteById(incomeId);
+    }
 
+
+    //Get latest 5 incomes for current profile
+    public List<IncomeDto> getLatest5IncomesForProfile(){
+        ProfileEntity profile = profileService.getCurrentProfile();
+        List<IncomeEntity> incomes = incomeRepository.findTop5ByProfileIdOrderByDateDesc(profile.getId());
+        return incomes.stream().map(this::toDto).toList();
+    }
+
+    //Get total income amount for current profile
+    public java.math.BigDecimal getTotalIncomeAmountForProfile(){
+        ProfileEntity profile = profileService.getCurrentProfile();
+        java.math.BigDecimal totalAmount = incomeRepository.findTotalAmountByProfileId(profile.getId());
+        return totalAmount != null ? totalAmount : java.math.BigDecimal.ZERO;
+    }
 
 
     //helper method
