@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.UUID;
 
 import com.project.moneymanager.util.JwtUtil;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -24,6 +25,9 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class ProfileService {
 
+    @Value("${app.activation.url}")
+    private String activationURL;
+
     private final ProfileRepository profileRepository;
     private final EmailService emailService;
     private final PasswordEncoder passwordEncoder;
@@ -37,7 +41,7 @@ public class ProfileService {
         newProfile = profileRepository.save(newProfile);
 
         //send activation email
-        String activationlink = "http://localhost:8080/api/v1.0/activate?token=" + newProfile.getActivationToken();
+        String activationlink = activationURL+"/api/v1.0/activate?token=" + newProfile.getActivationToken();
         String subject = "Activate your account";
         String body = "Click the following link to activate your account: " + activationlink;
         emailService.sendEmail(newProfile.getEmail(), subject, body);
